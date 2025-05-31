@@ -1,4 +1,5 @@
 const supabase = require("../config/supabaseClient");
+const { getUserGoogleOAuthClient } = require("../utils/googleAuth");
 const { generatePlatformLink, extractMeetingCode } = require("../utils/meetingUtils");
 const { getZoomAccessToken } = require("../utils/zoomApi");
 
@@ -13,8 +14,36 @@ exports.createMeeting = async (req, res) => {
   }
 
   try {
+    let oauth2Client = null;
+
+    // If user selected Google Meet, check if they connected Google
+    if (platform === "google_meet") {
+      const { data: userProfile, error: profileError } = await supabase
+        .from("users")
+        .select("google_connected")
+        .eq("id", user_id)
+        .single();
+
+      if (profileError || !userProfile?.google_connected) {
+        return res.status(400).json({
+          error: "Please connect your Google account to use Google Meet.",
+        });
+      }
+
+    
+
+      oauth2Client = await getUserGoogleOAuthClient(user_id);
+      if (!oauth2Client) {
+        return res.status(400).json({
+          error: "Failed to fetch Google OAuth tokens. Please reconnect your account.",
+        });
+      }
+    }
+    
     // Generate meeting link + metadata
-    const { join_url, platform_meeting_id } = await generatePlatformLink(platform, name);
+    const { join_url, platform_meeting_id } = await generatePlatformLink(platform, name, {
+      oauth2Client,
+    });
     const meeting_code = extractMeetingCode(meeting_url); // Optional parsing
 
     const { data, error } = await supabase.from("meetings").insert({
@@ -140,6 +169,8 @@ exports.endMeeting = async (req, res) => {
         console.error("Zoom end meeting error:", zoomError.response?.data || zoomError.message);
         return res.status(500).json({ error: "Failed to end Zoom meeting." });
       }
+    } else if (meeting.platform === 'google_meet') {
+      // No API call needed for Google Meet, just mark ended in DB
     }
 
     // Mark as ended in Supabase

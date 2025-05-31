@@ -1,20 +1,29 @@
+const { createGoogleMeetEvent } = require("./meetApi");
 const { createZoomMeeting } = require("./zoomApi");
 
 
-async function generatePlatformLink(platform, name) {
-  if (platform === "zoom") {
-    const zoomData = await createZoomMeeting(name); // This returns Zoom's full meeting object
-    return {
-      join_url: zoomData.join_url,
-      platform_meeting_id: zoomData.id, // numeric ID
-    };
-  }
+async function generatePlatformLink(platform, name, options = {}) {
+    if (platform === "zoom") {
+        const zoomData = await createZoomMeeting(name); // This returns Zoom's full meeting object
+        return {
+            join_url: zoomData.join_url,
+            platform_meeting_id: zoomData.id, // numeric ID
+        };
+    }
 
-  // Stub for Google/Teams — replace as needed
-  return {
-    join_url: `https://example.com/fake-link-for-${platform}`,
-    platform_meeting_id: null,
-  };
+    if (platform === "google_meet") {
+        if (!options.oauth2Client) {
+            throw new Error("Google OAuth2 client is required for Google Meet creation");
+        }
+        return await createGoogleMeetEvent(name, options.oauth2Client);
+    }
+
+
+    // Stub for Google/Teams — replace as needed
+    return {
+        join_url: `https://example.com/fake-link-for-${platform}`,
+        platform_meeting_id: null,
+    };
 }
 
 
