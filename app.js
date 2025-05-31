@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 
 const userRoutes = require('./routes/userRoutes.js');
+const meetingRoutes = require('./routes/meetingRoutes.js');
 const cookieParser = require('cookie-parser');
 
 const app = express();
@@ -30,6 +31,7 @@ app.options(/.*/, cors({
 
 // Routes
 app.use('/api/user', userRoutes);
+app.use('/api/meeting', meetingRoutes);
 
 // Health Check Route
 app.get('/', (req, res) => {
