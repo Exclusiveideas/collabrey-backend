@@ -1,10 +1,11 @@
 
+
 const { google } = require("googleapis");
 
 // You must provide OAuth2 client or access token for Google API
 // For example, you could pass the google OAuth2 client here or get a token from your user/session.
 
-export async function createGoogleMeetEvent(name, oauth2Client) {
+exports.createGoogleMeetEvent = async(name, oauth2Client) => {
   const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
   // Create a calendar event with conferenceData to generate Google Meet link

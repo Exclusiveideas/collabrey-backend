@@ -1,4 +1,5 @@
-const supabase = require("../config/supabaseClient"); // Ensure you import Supabase
+const supabase = require("../config/supabaseClient");
+
 
 const getUserByAuthId = async (auth_id) => {
     if (!auth_id) {
@@ -28,8 +29,7 @@ module.exports = { getUserByAuthId };
 
 const validateForm = (formData) => {
     let validationError = "";
-    if (!formData.user_name) validationError = "Username is required";
-    if (!formData.organization_name) validationError = "The name of your organization is required";
+    if (!formData.full_name) validationError = "Your full name is required";
     if (!formData.email) {
       validationError = "Email is required";
     }

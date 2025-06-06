@@ -8,7 +8,7 @@ const ZOOM_CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET;
 let accessToken = null;
 let tokenExpiresAt = 0;
 
-export async function getZoomAccessToken() {
+exports.getZoomAccessToken = async() => {
   if (accessToken && Date.now() < tokenExpiresAt) return accessToken;
 
   const tokenResponse = await axios.post(

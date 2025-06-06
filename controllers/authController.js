@@ -1,7 +1,8 @@
 const supabase = require("../config/supabaseClient");
+const { getRandomAvatar } = require("../services/authService");
+const { generateSignString } = require("../utils/auth");
 
 const { getUserByAuthId, validateForm } = require("../utils/getUserByAuthId");
-const { getRandomAvatar } = require("../services/authService")
 
 const exempted_role = [
     "admin",
@@ -11,14 +12,14 @@ const exempted_role = [
 
 // User Signup
 exports.signup = async (req, res) => {
-    const { organization_name, email, user_name, password } = req.body;
+    const { email, full_name, password } = req.body;
 
     // Ensure the user_name is not "admin"
-    if (exempted_role.includes(user_name.toLowerCase())) {
-        return res.status(400).json({ error: `Username ${user_name} is not allowed.` });
+    if (exempted_role?.includes(full_name?.toLowerCase())) {
+        return res.status(400).json({ error: `Name "${full_name}" is not allowed.` });
     }
 
-    const validationError = validateForm({ organization_name, email, user_name, password });
+    const validationError = validateForm({ email, full_name, password });
 
     if (validationError) {
         return res.status(400).json({ error: validationError });
@@ -50,12 +51,13 @@ exports.signup = async (req, res) => {
 
         if (data?.user) {
             // Generate random avatar
-            const { avatar_url } = getRandomAvatar(user_name);
+            const { avatar_url } = getRandomAvatar(full_name);
+            const organization_name = generateSignString(full_name);
 
             // Create user profile
             const { error: profileError } = await supabase.from("profiles").insert({
                 auth_id: data.user.id,
-                user_name: user_name,
+                full_name: full_name,
                 email: data.user.email,
                 avatar_url: avatar_url,
                 organization_name
@@ -85,10 +87,38 @@ exports.login = async (req, res) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
+        const errorMessage = error.message.toLowerCase();
+
+        // 🔁 Auto-resend confirmation email if not confirmed
+        if (errorMessage.includes('email not confirmed')) {
+            const { error: resendError } = await supabase.auth.resend({
+                type: 'signup',
+                email,
+                options: {
+                    emailRedirectTo: 'https://collabery.vercel.app/auth'
+                }
+            });
+
+            if (resendError) {
+                return res.status(400).json({
+                    error: 'Failed to resend confirmation email. ' + resendError.message
+                });
+            }
+
+            return res.status(400).json({
+                error: 'Email not confirmed. A new confirmation email has been sent.'
+            });
+        }
+
         return res.status(400).json({ error: error.message });
     }
 
+    
     let user = await getUserByAuthId(data?.user?.id);
+    
+    if(user?.error) {
+        return res.status(400).json({ error: 'Error fetching user.' });
+    }
 
     // Send the access_token in the response body instead of a cookie
     return res.status(200).json({

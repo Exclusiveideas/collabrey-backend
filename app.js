@@ -5,8 +5,8 @@ const bodyParser = require('body-parser');
 
 const userRoutes = require('./routes/userRoutes.js');
 const meetingRoutes = require('./routes/meetingRoutes.js');
-const googleAuthRouter = require("./routes/auth/google");
-const googleCallbackRouter = require("./routes/auth/googleCallback");
+// const googleAuthRouter = require("./routes/auth/google");
+// const googleCallbackRouter = require("./routes/auth/googleCallback");
 
 
 
@@ -39,8 +39,8 @@ app.use('/api/user', userRoutes);
 app.use('/api/meeting', meetingRoutes);
 
 // google auth routes
-app.use("/api/auth/google", googleAuthRouter);
-app.use("/api/auth/google/callback", googleCallbackRouter);
+// app.use("/api/auth/google", googleAuthRouter);
+// app.use("/api/auth/google/callback", googleCallbackRouter);
 
 // Health Check Route
 app.get('/', (req, res) => {

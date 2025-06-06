@@ -1,6 +1,6 @@
 // utils/googleAuth.js
 const { google } = require("googleapis");
-const { supabase } = require("../lib/supabaseClient"); // Adjust this import path to your Supabase client
+const supabase = require("../config/supabaseClient");
 
 const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
