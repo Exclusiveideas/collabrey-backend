@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const bodyParser = require('body-parser');
+const bodyParser = require('body-parser'); 
 
 const userRoutes = require('./routes/userRoutes.js');
 const meetingRoutes = require('./routes/meetingRoutes.js');
+const teamsRoutes = require('./routes/teamsRoutes.js');
+const zoomWebhookRouter = require('./routes/webhooksRoutes.js');
 // const googleAuthRouter = require("./routes/auth/google");
 // const googleCallbackRouter = require("./routes/auth/googleCallback");
 
@@ -17,6 +19,9 @@ const app = express();
 
 dotenv.config(); // Load environment variables
 
+// webhook routes
+app.use('/api/webhooks/zoom', bodyParser.raw({ type: 'application/json' }), zoomWebhookRouter);
+
 // Middleware
 app.use(cors({
   origin: ["http://localhost:3000"],
@@ -25,8 +30,8 @@ app.use(cors({
   allowedHeaders: ["Content-Type", "Authorization", "Content-Length", "X-Requested-With"],
 }));
 
-app.use(bodyParser.json());
 app.use(cookieParser());
+app.use(express.json());
 
 app.options(/.*/, cors({
   origin: ["http://localhost:3000"],
@@ -36,7 +41,8 @@ app.options(/.*/, cors({
 
 // Routes
 app.use('/api/user', userRoutes);
-app.use('/api/meeting', meetingRoutes);
+app.use('/api/meetings', meetingRoutes);
+app.use('/api/teams', teamsRoutes);
 
 // google auth routes
 // app.use("/api/auth/google", googleAuthRouter);

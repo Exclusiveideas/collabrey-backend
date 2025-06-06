@@ -8,7 +8,7 @@ const ZOOM_CLIENT_SECRET = process.env.ZOOM_CLIENT_SECRET;
 let accessToken = null;
 let tokenExpiresAt = 0;
 
-exports.getZoomAccessToken = async() => {
+const getZoomAccessToken = async() => {
   if (accessToken && Date.now() < tokenExpiresAt) return accessToken;
 
   const tokenResponse = await axios.post(
@@ -56,4 +56,4 @@ async function createZoomMeeting(topic = "Untitled Meeting") {
   return response.data;
 }
 
-module.exports = { createZoomMeeting };
+module.exports = { createZoomMeeting, getZoomAccessToken };

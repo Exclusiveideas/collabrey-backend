@@ -2,9 +2,9 @@ const { createGoogleMeetEvent } = require("./meetApi");
 const { createZoomMeeting } = require("./zoomApi");
 
 
-async function generatePlatformLink(platform, name, options = {}) {
+async function generatePlatformLink(platform, topic, options = {}) {
     if (platform === "zoom") {
-        const zoomData = await createZoomMeeting(name); // This returns Zoom's full meeting object
+        const zoomData = await createZoomMeeting(topic); // This returns Zoom's full meeting object
         return {
             join_url: zoomData.join_url,
             platform_meeting_id: zoomData.id, // numeric ID
@@ -15,7 +15,7 @@ async function generatePlatformLink(platform, name, options = {}) {
         if (!options.oauth2Client) {
             throw new Error("Google OAuth2 client is required for Google Meet creation");
         }
-        return await createGoogleMeetEvent(name, options.oauth2Client);
+        return await createGoogleMeetEvent(topic, options.oauth2Client);
     }
 
 

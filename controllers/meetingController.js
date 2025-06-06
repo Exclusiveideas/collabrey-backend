@@ -5,11 +5,11 @@ const { getZoomAccessToken } = require("../utils/zoomApi");
 
 
 exports.createMeeting = async (req, res) => {
-  const { name, team_id, platform, is_private } = req.body;
+  const { topic, team_id, platform, is_private } = req.body;
   const user_id = req.user.id;
 
 
-  if (!name || !team_id || !platform || !is_private) {
+  if (!topic || !team_id || !platform) {
     return res.status(400).json({ error: 'Incomplete details.' });
   }
 
@@ -41,13 +41,15 @@ exports.createMeeting = async (req, res) => {
     }
     
     // Generate meeting link + metadata
-    const { join_url, platform_meeting_id } = await generatePlatformLink(platform, name, {
+    const { join_url, platform_meeting_id } = await generatePlatformLink(platform, topic, {
       oauth2Client,
     });
-    const meeting_code = extractMeetingCode(meeting_url); // Optional parsing
+    
+    const meeting_code = extractMeetingCode(join_url);
+
 
     const { data, error } = await supabase.from("meetings").insert({
-      name,
+      topic,
       team_id,
       platform,
       meeting_code,
@@ -60,7 +62,7 @@ exports.createMeeting = async (req, res) => {
 
     if (error) return res.status(500).json({ error: error.message });
 
-    return res.status(201).json({ message: "Meeting creation successful.", data: data });
+    return res.status(201).json({ data: data });
   } catch (err) {
     console.error("Meeting creation error:", err);
     return res.status(500).json({ error: "Internal server error." });
@@ -130,86 +132,112 @@ exports.joinMeeting = async (req, res) => {
 };
 
 
-exports.endMeeting = async (req, res) => {
-  const meeting_id = req.params.id;
-  const user_id = req.user.id;
+// exports.endMeeting = async (req, res) => {
+//   const meeting_id = req.params.id;
+//   const user_id = req.user.id;
 
-  if (!meeting_id) return res.status(400).json({ error: "Meeting ID is required." });
+//   if (!meeting_id) return res.status(400).json({ error: "Meeting ID is required." });
+
+//   try {
+//     // Fetch meeting info
+//     const { data: meeting, error } = await supabase
+//       .from("meetings")
+//       .select("created_by, platform, platform_meeting_id")
+//       .eq("id", meeting_id)
+//       .single();
+
+//     if (error || !meeting) return res.status(404).json({ error: "Meeting not found." });
+//     if (meeting.created_by !== user_id) return res.status(403).json({ error: "Unauthorized." });
+
+//     // If Zoom meeting, end it via Zoom API
+//     if (meeting.platform === 'zoom' && meeting.platform_meeting_id) {
+//       try {
+//         const token = await getZoomAccessToken();
+//         const zoomResponse = await axios.put(
+//           `https://api.zoom.us/v2/meetings/${meeting.platform_meeting_id}/status`,
+//           { action: "end" },
+//           {
+//             headers: {
+//               Authorization: `Bearer ${token}`,
+//               "Content-Type": "application/json",
+//             },
+//           }
+//         );
+
+//         if (zoomResponse.status !== 204) {
+//           console.warn("Zoom meeting end request returned:", zoomResponse.status);
+//         }
+//       } catch (zoomError) {
+//         console.error("Zoom end meeting error:", zoomError.response?.data || zoomError.message);
+//         return res.status(500).json({ error: "Failed to end Zoom meeting." });
+//       }
+//     } else if (meeting.platform === 'google_meet') {
+//       // No API call needed for Google Meet, just mark ended in DB
+//     }
+
+//     // Mark as ended in Supabase
+//     const { error: updateError } = await supabase
+//       .from("meetings")
+//       .update({ end_time: new Date() })
+//       .eq("id", meeting_id);
+
+//     if (updateError) return res.status(500).json({ error: updateError.message });
+
+//     res.status(200).json({ message: "Meeting ended successfully." });
+//   } catch (err) {
+//     console.error("End meeting error:", err);
+//     res.status(500).json({ error: "Internal server error." });
+//   }
+// };
+
+
+// exports.getMyMeetings = async (req, res) => {
+//   const user_id = req.user.id;
+
+//   try {
+//     const { data, error } = await supabase
+//       .from("meeting_participants")
+//       .select(`
+//         meeting_id,
+//         meetings (
+//           id, topic, start_time, end_time, platform, platform_meeting_id, created_by
+//         )
+//       `)
+//       .eq("user_id", user_id);
+
+//     if (error) return res.status(500).json({ error: error.message });
+
+//     const meetings = data.map(record => record.meetings);
+
+//     res.status(200).json({ data: meetings });
+//   } catch (err) {
+//     console.error("Get meetings error:", err);
+//     res.status(500).json({ error: "Internal server error." });
+//   }
+// };
+
+
+exports.getUserMeetings = async (req, res) => {
+  const userId = req.user?.id;
+
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized: No user ID found in request' });
+  }
 
   try {
-    // Fetch meeting info
-    const { data: meeting, error } = await supabase
-      .from("meetings")
-      .select("created_by, platform, platform_meeting_id")
-      .eq("id", meeting_id)
-      .single();
+    const { data: meetings, error } = await supabase
+      .from('meetings')
+      .select('*')
+      .eq('created_by', userId)
+      .order('start_time', { ascending: true });
 
-    if (error || !meeting) return res.status(404).json({ error: "Meeting not found." });
-    if (meeting.created_by !== user_id) return res.status(403).json({ error: "Unauthorized." });
-
-    // If Zoom meeting, end it via Zoom API
-    if (meeting.platform === 'zoom' && meeting.platform_meeting_id) {
-      try {
-        const token = await getZoomAccessToken();
-        const zoomResponse = await axios.put(
-          `https://api.zoom.us/v2/meetings/${meeting.platform_meeting_id}/status`,
-          { action: "end" },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        if (zoomResponse.status !== 204) {
-          console.warn("Zoom meeting end request returned:", zoomResponse.status);
-        }
-      } catch (zoomError) {
-        console.error("Zoom end meeting error:", zoomError.response?.data || zoomError.message);
-        return res.status(500).json({ error: "Failed to end Zoom meeting." });
-      }
-    } else if (meeting.platform === 'google_meet') {
-      // No API call needed for Google Meet, just mark ended in DB
+    if (error) {
+      throw error;
     }
 
-    // Mark as ended in Supabase
-    const { error: updateError } = await supabase
-      .from("meetings")
-      .update({ end_time: new Date() })
-      .eq("id", meeting_id);
-
-    if (updateError) return res.status(500).json({ error: updateError.message });
-
-    res.status(200).json({ message: "Meeting ended successfully." });
+    res.status(200).json({ meetings });
   } catch (err) {
-    console.error("End meeting error:", err);
-    res.status(500).json({ error: "Internal server error." });
-  }
-};
-
-
-exports.getMyMeetings = async (req, res) => {
-  const user_id = req.user.id;
-
-  try {
-    const { data, error } = await supabase
-      .from("meeting_participants")
-      .select(`
-        meeting_id,
-        meetings (
-          id, name, start_time, end_time, platform, platform_meeting_id, created_by
-        )
-      `)
-      .eq("user_id", user_id);
-
-    if (error) return res.status(500).json({ error: error.message });
-
-    const meetings = data.map(record => record.meetings);
-
-    res.status(200).json({ data: meetings });
-  } catch (err) {
-    console.error("Get meetings error:", err);
-    res.status(500).json({ error: "Internal server error." });
+    console.error('Error fetching meetings:', err.message || err);
+    res.status(500).json({ error: 'Failed to fetch meetings' });
   }
 };
