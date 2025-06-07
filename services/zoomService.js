@@ -40,7 +40,6 @@ exports.endZoomMeeting = async (zoomMeetingId) => {
 
 
 
-
 exports.startZoomBot = async (zoomMeetingId) => {
   try {
     if (!zoomMeetingId) {
@@ -49,20 +48,25 @@ exports.startZoomBot = async (zoomMeetingId) => {
 
     const { data: meeting, error } = await supabase
       .from("meetings")
-      .select("id, topic, platform_meeting_id, start_time")
+      .select("id, topic, platform_meeting_id, join_url, start_time")
       .eq("platform", "zoom")
       .eq("platform_meeting_id", zoomMeetingId)
       .single();
 
     if (error || !meeting) throw new Error("Meeting not found");
+    if (!meeting.join_url) throw new Error("Meeting Url not found");
 
-    await axios.post("https://api.attendee.dev/v1/join", {
-      meeting_url: `https://zoom.us/j/${zoomMeetingId}`,
-      external_id: meeting.id,
-      platform: "zoom"
+    await axios.post("https://app.attendee.dev/api/v1/bots", {
+      meeting_url: meeting.join_url,
+      bot_name: "Collabrey Zoom Bot",
+      external_id: meeting.id, // optional - usually used to link in your DB
+      platform: "zoom",
+      metadata: {
+        meeting_id: meeting.id  // ✅ This will show up in webhook payloads
+      }
     }, {
       headers: {
-        Authorization: `Bearer ${process.env.ATTENDEE_API_KEY}`,
+        Authorization: `Token ${process.env.ATTENDEE_API_KEY}`,
         "Content-Type": "application/json"
       }
     });

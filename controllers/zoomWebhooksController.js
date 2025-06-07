@@ -26,6 +26,7 @@ exports.zoomWebhookHandler = async (req, res) => {
         return res.status(200).json({ message: "Zoom meeting marked as ended" });
 
       case "meeting.started":
+        console.log('meeting has started')
         await startZoomBot(zoomMeetingId);
         return res.status(200).json({ message: "Zoom bot triggered via Attendee.dev" });
 
