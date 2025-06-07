@@ -5,7 +5,7 @@ const supabase = require("../config/supabaseClient");
 
 exports.attendeeTranscriptHandler = async (req, res) => {
     try {
-        console.log('connected to the attendee transcript handler');
+        // console.log('connected to the attendee transcript handler');
 
         // const secret = process.env.ATTENDEE_WEBHOOK_SECRET;
         const rawBody = req.body; // already a Buffer
@@ -44,7 +44,7 @@ exports.attendeeTranscriptHandler = async (req, res) => {
         const { error } = await supabase.from("transcripts").insert([insertData]);
         if (error) throw new Error("Failed to insert transcript");
 
-        // console.log('transcriptSegment: ', transcriptSegment)
+        console.log('transcriptSegment: ', transcriptSegment)
         // Emit transcript segment to the frontend via WebSocket
         if (global.io) {
             global.io.to(meeting_id).emit("transcript", insertData);

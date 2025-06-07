@@ -9,6 +9,7 @@ const teamsRoutes = require('./routes/teamsRoutes.js');
 const zoomWebhookRouter = require('./routes/zoomWebhooksRoutes.js');
 const zoomAuthCallbackRoute = require('./routes/zoomAuthCallbackRoute.js');
 const attendeeWebhookRouter = require('./routes/attendeeWebhooksRoutes.js');
+const generalZoomRoutes = require('./routes/generalZoomRoutes.js');
 // const googleAuthRouter = require("./routes/auth/google");
 // const googleCallbackRouter = require("./routes/auth/googleCallback");
 
@@ -46,6 +47,9 @@ app.options(/.*/, cors({
 app.use('/api/user', userRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/teams', teamsRoutes);
+
+// zoom routes
+app.use('/api/zoom', generalZoomRoutes);
 
 // zoom auth callback
 app.use('/api/auth/zoom/callback', zoomAuthCallbackRoute);
