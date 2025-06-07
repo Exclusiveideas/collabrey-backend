@@ -1,4 +1,4 @@
-const { endZoomMeeting } = require("../services/zoomService");
+const { endZoomMeeting, startZoomBot } = require("../services/zoomService");
 
 
 
@@ -26,8 +26,8 @@ exports.zoomWebhookHandler = async (req, res) => {
         return res.status(200).json({ message: "Zoom meeting marked as ended" });
 
       case "meeting.started":
-        // future: handle start event
-        return res.status(200).json({ message: "Zoom meeting started (ignored for now)" });
+        await startZoomBot(zoomMeetingId);
+        return res.status(200).json({ message: "Zoom bot triggered via Attendee.dev" });
 
       default:
         return res.status(200).json({ message: `Unhandled event: ${event}` });

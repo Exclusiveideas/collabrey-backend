@@ -1,5 +1,5 @@
 const express = require('express');
-const { zoomWebhookHandler } = require('../controllers/webhooksController');
+const { zoomWebhookHandler } = require('../controllers/zoomWebhooksController');
 
 const router = express.Router();
 

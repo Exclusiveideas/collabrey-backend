@@ -6,7 +6,8 @@ const bodyParser = require('body-parser');
 const userRoutes = require('./routes/userRoutes.js');
 const meetingRoutes = require('./routes/meetingRoutes.js');
 const teamsRoutes = require('./routes/teamsRoutes.js');
-const zoomWebhookRouter = require('./routes/webhooksRoutes.js');
+const zoomWebhookRouter = require('./routes/zoomWebhooksRoutes.js');
+const attendeeWebhookRouter = require('./routes/attendeeWebhooksRoutes.js');
 // const googleAuthRouter = require("./routes/auth/google");
 // const googleCallbackRouter = require("./routes/auth/googleCallback");
 
@@ -21,6 +22,7 @@ dotenv.config(); // Load environment variables
 
 // webhook routes
 app.use('/api/webhooks/zoom', bodyParser.raw({ type: 'application/json' }), zoomWebhookRouter);
+app.use('/api/webhooks/attendee', bodyParser.raw({ type: 'application/json' }), attendeeWebhookRouter);
 
 // Middleware
 app.use(cors({
