@@ -23,7 +23,7 @@ const app = express();
 dotenv.config(); // Load environment variables
 
 // webhook routes
-app.use('/api/webhooks/zoom', bodyParser.raw({ type: 'application/json' }), zoomWebhookRouter);
+app.use('/api/webhooks/zoom', express.json(), zoomWebhookRouter);
 app.use('/api/webhooks/attendee', bodyParser.raw({ type: 'application/json' }), attendeeWebhookRouter);
 
 // Middleware

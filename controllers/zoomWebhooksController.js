@@ -37,7 +37,7 @@ exports.zoomWebhookHandler = async (req, res) => {
         encryptedToken
       });
     }
-
+    
     // Step 3: Handle other real events like meeting.started, meeting.ended
     const zoomMeetingId = payload?.object?.id;
 
