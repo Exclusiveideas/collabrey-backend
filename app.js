@@ -28,7 +28,7 @@ app.use('/api/webhooks/attendee', bodyParser.raw({ type: 'application/json' }), 
 
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:3000", "https://collabrey.vercel.app/"],
+  origin: ["http://localhost:3000", "https://collabrey.vercel.app"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Content-Length", "X-Requested-With"],
@@ -38,7 +38,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.options(/.*/, cors({
-  origin: ["http://localhost:3000", "https://collabrey.vercel.app/"],
+  origin: ["http://localhost:3000", "https://collabrey.vercel.app"],
   credentials: true,
 }));
 
